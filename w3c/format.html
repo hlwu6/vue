@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+    <script src="http://libs.baidu.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
+    <link href="http://libs.baidu.com/bootstrap/3.0.3/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        table thead tr th {
+            text-align: center
+        }
+    </style>
+</head>
+
+<body>
+    <div style="padding: 20px" id="app">
+        <div class="panel panel-primary">
+            <div class="panel-heading">用户管理</div>
+            <table class="table table-bordered table-striped text-center">
+                <thead>
+                    <tr>
+                        <th>编号</th>
+                        <th>用户名</th>
+                        <th>年龄</th>
+                        <th>毕业院校</th>
+                        <th>备注</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template v-for="(row,index) in rows">
+                        <tr v-if="index>=(curpage-1)*pagesize&&index<curpage*pagesize">
+                            <td>{{row.id}}</td>
+                            <td>{{row.name}}</td>
+                            <td>{{row.age}}</td>
+                            <td>{{row.school}}</td>
+                            <td>{{row.remark}}</td>
+                            <td>
+                                <a href="#" v-on:click="Edit(row)">编辑</a>
+                                <a href="#" v-on:click="Delete(row.id)">删除</a>
+                            </td>
+                        </tr>
+                    </template>
+                    <tr>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td>
+                            <input type="text" class="form-control" v-model="rowtemplate.name">
+                        </td>
+                        <td>
+                            <input type="text" class="form-control" v-model="rowtemplate.age">
+                        </td>
+                        <td>
+                            <select name="" class="form-control" id="" v-model="rowtemplate.school">
+                                <option>中山小学</option>
+                                <option>复兴小学</option>
+                                <option>光明小学</option>
+                            </select>
+                        </td>
+                        <td>
+                            <input type="text" v-model="rowtemplate.remark" class="form-control">
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-primary" @click="Save">保存</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <nav style="float:right">
+            <ul class="pagination pagination-lg">
+                <template v-for="page in Math.ceil(rows.length/pagesize)">
+                    <li @click="PrePage()" id="prepage" v-if="page == 1" class="disabled"><a href="#">上一页</a></li>
+                    <li v-if="page == 1" class="active" @click="NumPage(page,$event)"><a href="#">{{page}}</a></li>
+                    <li v-else @click="NumPage(page,$event)"><a href="#">{{page}}</a></li>
+                    <li id="nextpage" @click="NextPage()" v-if="page == Math.ceil(rows.length/pagesize)"><a href="#">下一页</a></li>
+                </template>
+            </ul>
+        </nav>
+    </div>
+</body>
+<script src="http://cdn.bootcss.com/vue/2.1.6/vue.min.js"></script>
+<script>
+    var data = {
+        rows: [{
+            id: 1,
+            name: '小明',
+            age: 18,
+            school: '光明小学',
+            remark: '三好学生'
+        }, {
+            id: 2,
+            name: '小刚',
+            age: 20,
+            school: '复兴中学',
+            remark: '优秀班干部'
+        }, {
+            id: 3,
+            name: '吉姆格林',
+            age: 19,
+            school: '光明小学',
+            remark: '吉姆做了汽车公司经理'
+        }, {
+            id: 4,
+            name: '李雷',
+            age: 25,
+            school: '复兴中学',
+            remark: '不老实的家伙'
+        }, {
+            id: 5,
+            name: '韩梅梅',
+            age: 22,
+            school: '光明小学',
+            remark: '在一起'
+        }, ],
+        rowtemplate: {
+            id: 0,
+            name: '',
+            age: '',
+            school: '',
+            remark: ''
+        },
+        pagesize: 2,
+        curpage: 1
+    };
+    var vue = new Vue({
+        el: "#app",
+        data: data,
+        methods: {
+            PrePage: function (event) {
+                jQuery(".pagination .active").prev().trigger("click");
+            },
+            NextPage: function (event) {
+                jQuery(".pagination .active").next().trigger("click");
+            },
+            NumPage: function (num, event) {
+                if (this.curpage == num) {
+                    return;
+                }
+                this.curpage = num;
+                jQuery(".pagination li").removeClass("active");
+                if (event.target.tagName.toUpperCase() == "LI") {
+                    jQuery(event.target).addClass('active');
+                } else {
+                    jQuery(event.target).parent().addClass('active');
+                }
+                if (this.curpage == 1) {
+                    jQuery('#prepage').addClass('disabled');
+                } else {
+                    jQuery('#prepage').removeClass('disabled');
+                }
+                if (this.curpage == Math.ceil(this.rows.length / this.pagesize)) {
+                    jQuery('#nextpage').addClass('disabled');
+                } else {
+                    jQuery('#nextpage').removeClass('disabled');
+                }
+            },
+            Save: function (ev) {
+                if (this.rowtemplate.id == 0) {
+                    this.rowtemplate.id = this.rows[this.rows.length - 1].id + 1;this.rows.push(this.rowtemplate);
+                }
+                //还原模板
+                this.rowtemplate = {
+                    id: 0,
+                    name: '',
+                    age: '',
+                    school: '',
+                    remark: ''
+                };
+            },
+            Edit: function (row) {
+                // v-model绑定的数据，是双向的，所以对rowtemplate的修改直接会修改row对象，继而会修改this.rows数据，所以对最后一行的修改直接会体现在被修改的行上面
+                this.rowtemplate = row;
+            },
+            Delete: function (id) {
+                for (var i = 0; i < this.rows.length; i++) {
+                    if (id == this.rows[i].id) {
+                        this.rows.splice(i, 1);
+                        break;
+                    }
+                }
+            }
+        }
+    });
+</script>
+
+</html>
